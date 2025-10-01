@@ -40,9 +40,12 @@ fn main() -> Result<()> {
 #[tokio::main]
 async fn main_impl() -> Result<i32> {
     let args = Args::parse_args().context("could not parse arguments")?;
+    log::error!("starting Helix");
 
     helix_loader::initialize_config_file(args.config_file.clone());
     helix_loader::initialize_log_file(args.log_file.clone());
+
+    log::error!("initialized log file");
 
     // Help has a higher priority and should be handled separately.
     if args.display_help {
@@ -115,6 +118,8 @@ FLAGS:
 
     setup_logging(args.verbosity).context("failed to initialize logging")?;
 
+    log::error!("setupd logging good");
+
     // NOTE: Set the working directory early so the correct configuration is loaded. Be aware that
     // Application::new() depends on this logic so it must be updated if this changes.
     if let Some(path) = &args.working_directory {
@@ -139,6 +144,8 @@ FLAGS:
         }
     };
 
+    log::error!("got config");
+
     let lang_loader = helix_core::config::user_lang_loader().unwrap_or_else(|err| {
         eprintln!("{}", err);
         eprintln!("Press <ENTER> to continue with default language config");
@@ -148,11 +155,14 @@ FLAGS:
         helix_core::config::default_lang_loader()
     });
 
+    log::error!("lang loaded");
+
     // TODO: use the thread local executor to spawn the application task separately from the work pool
     let mut app = Application::new(args, config, lang_loader).context("unable to start Helix")?;
     let mut events = app.event_stream();
 
     let exit_code = app.run(&mut events).await?;
 
+    log::error!("done :)");
     Ok(exit_code)
 }
